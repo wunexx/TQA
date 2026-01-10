@@ -30,7 +30,7 @@ bot.start(async (ctx) => {
 bot.action("CREATE_REF", (ctx) => {
     ctx.answerCbQuery();
 
-    ctx.reply(`Succesfully created a referral link! Link: https://t.me/${process.env.BOT_USERNAME}?start=${ctx.from.id}`);
+    ctx.reply(`Succesfully created a referral link! Link: https://t.me/tqa_coin_bot?start=${ctx.from.id}`);
 });
 
 bot.action("SHOW_REF", async (ctx) => {
