@@ -30,11 +30,17 @@ bot.start(async (ctx) => {
     ctx.reply(`Welcome to the official TQA meme coin bot!🚀 ${str}Choose action you want me to do:`, Markup.inlineKeyboard([
         [Markup.button.callback("Create Referral Link", "CREATE_REF"), Markup.button.callback("My Referral Stats", "SHOW_REF")],
         [Markup.button.callback("Enter Mini App", "ENTER_APP")],
+        [Markup.button.callback("Referral Leaderboard", "SHOW_LEADERBOARD")],
         [Markup.button.url("Join News Channel", "https://t.me/+-vL_K7ydtfQ5NWE6"), Markup.button.url("Join Meme Channel", "https://t.me/+R76a4MOb-EQyYjky")]
     ]));
 });
 
+bot.action("SHOW_LEADERBOARD", async (ctx) => {
+    ctx.answerCbQuery();
 
+    const leaderboard = await TryGetLeaderboard();
+    ctx.reply(leaderboard);
+});
 
 bot.action("CREATE_REF", (ctx) => {
     ctx.answerCbQuery();
@@ -98,6 +104,36 @@ async function TryAddUser(telegramId, referredBy = null, username = null, firstN
         }
 
         return true;
+    }
+    finally{
+        client.release();
+    }
+}
+
+async function TryGetLeaderboard(){
+    const client = await pool.connect();
+
+    try{
+        const res = await client.query("SELECT first_name, referral_count FROM users WHERE referral_count > 0 ORDER BY referral_count DESC LIMIT 10");
+
+        if (res.rows.length === 0) {
+            return "No referrals yet 👀";
+        }
+
+        let text = "🏆 Referral Leaderboard\n\n";
+
+        res.rows.forEach((row, index) => {
+            const medals = ["🥇", "🥈", "🥉"];
+            const badge = medals[index] || "🔹";
+            const name = row.first_name || "Anonymous";
+            text += `${badge} ${name} – ${row.referral_count}\n`;
+        });
+
+        return text;
+    }
+    catch(err){
+        console.error(err);
+        return "Failed to load leaderboard 😢";
     }
     finally{
         client.release();
