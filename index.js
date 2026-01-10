@@ -15,10 +15,10 @@ bot.start(async (ctx) => {
 
     let str = "";
 
-    if(referredBy)
-        str = "You have been invited by someone!";
+    if(referredBy && added)
+        str = "You have been invited by someone! ";
 
-    ctx.reply(`Welcome to the official TQA meme coin bot!🚀 ${str} Choose action you want me to do:`, Markup.inlineKeyboard([
+    ctx.reply(`Welcome to the official TQA meme coin bot!🚀 ${str}Choose action you want me to do:`, Markup.inlineKeyboard([
         [Markup.button.callback("Create Referral Link", "CREATE_REF"), Markup.button.callback("My Referral Stats", "SHOW_REF")],
         [Markup.button.callback("Enter Mini App", "ENTER_APP")],
         [Markup.button.url("Join News Channel", "https://t.me/+-vL_K7ydtfQ5NWE6"), Markup.button.url("Join Meme Channel", "https://t.me/+R76a4MOb-EQyYjky")]
