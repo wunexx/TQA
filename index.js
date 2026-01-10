@@ -9,7 +9,16 @@ const pool = new Pool({connectionString: process.env.DATABASE_URL, ssl: { reject
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 bot.start(async (ctx) => {
-    const referredBy = ctx.message.text.split(" ")[1] ? Number(ctx.message.text.split(" ")[1]) : null;
+    let referredBy = null;
+
+    if(ctx.message.text.split(" ")[1]){
+        try{
+            let decoded = Decode(ctx.message.text.split(" ")[1]?.trim());
+            if (!isNaN(decoded)) referredBy = decoded;
+        }catch(e){
+            console.log("Failed to decode id from link: ", e);
+        }
+    }
 
     const added = await TryAddUser(ctx.from.id, referredBy, ctx.from.username, ctx.from.first_name);
 
@@ -30,7 +39,9 @@ bot.start(async (ctx) => {
 bot.action("CREATE_REF", (ctx) => {
     ctx.answerCbQuery();
 
-    ctx.reply(`Succesfully created a referral link! Link: https://t.me/tqa_coin_bot?start=${ctx.from.id}`);
+    const encodedId = Encode(ctx.from.id);
+
+    ctx.reply(`Succesfully created a referral link! Link: https://t.me/tqa_coin_bot?start=${encodedId}`);
 });
 
 bot.action("SHOW_REF", async (ctx) => {
@@ -79,12 +90,24 @@ async function TryAddUser(telegramId, referredBy = null, username = null, firstN
 
         await client.query("INSERT INTO users (telegram_id, username, first_name, referred_by_id, referral_count) VALUES ($1, $2, $3, $4, $5)", [telegramId, username, firstName, referredBy, 0]);
 
-        if(referredBy)
-            await client.query("UPDATE users SET referral_count = referral_count + 1 WHERE telegram_id = $1", [referredBy]);
+        if(referredBy){
+            const refCheck = await client.query("SELECT 1 FROM users WHERE telegram_id = $1", [referredBy]);
+            if(refCheck.rows.length > 0) {
+                await client.query("UPDATE users SET referral_count = referral_count + 1 WHERE telegram_id = $1", [referredBy]);
+            }
+        }
 
         return true;
     }
     finally{
         client.release();
     }
+}
+
+function Encode(str){
+    return Buffer.from(str.toString()).toString("base64url");
+}
+
+function Decode(str){
+    return parseInt(Buffer.from(str, "base64url").toString("utf-8"));
 }
