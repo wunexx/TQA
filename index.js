@@ -5,6 +5,8 @@ const { Pool } = require("pg");
 const pool = new Pool({connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }});
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
+bot.launch().then(() => console.log("Bot started")).catch(err => console.error("Failed to launch bot:", err));
+
 bot.start(async (ctx) => {
     let referredBy = null;
 
@@ -146,10 +148,10 @@ function Decode(str){
 
 function MainMenuKeyboard(){
     return Markup.inlineKeyboard([
-        [Markup.button.callback("Create Referral Link✨", "CREATE_REF"), Markup.button.callback("My Referral Stats🪢", "SHOW_REF")],
-        [Markup.button.callback("Enter Mini App🚀", "ENTER_APP")],
-        [Markup.button.callback("Referral Leaderboard🏆", "SHOW_LEADERBOARD")],
-        [Markup.button.url("Join News Channel📃", "https://t.me/+-vL_K7ydtfQ5NWE6"), Markup.button.url("Join Meme Channel🗿", "https://t.me/+R76a4MOb-EQyYjky")]
+        [Markup.button.callback("✨ Create Referral Link", "CREATE_REF"), Markup.button.callback("🪢 My Referral Stats", "SHOW_REF")],
+        [Markup.button.callback("🚀 Enter Mini App", "ENTER_APP")],
+        [Markup.button.callback("🏆 Referral Leaderboard", "SHOW_LEADERBOARD")],
+        [Markup.button.url("📃 Join News Channel", "https://t.me/+-vL_K7ydtfQ5NWE6"), Markup.button.url("🗿 Join Meme Channel", "https://t.me/+R76a4MOb-EQyYjky")]
     ]);
 }
 
