@@ -27,27 +27,22 @@ bot.start(async (ctx) => {
     if(referredBy && added)
         str = "You have been invited by someone! ";
 
-    ctx.reply(`Welcome to the official TQA meme coin bot!🚀 ${str}Choose action you want me to do:`, Markup.inlineKeyboard([
-        [Markup.button.callback("Create Referral Link", "CREATE_REF"), Markup.button.callback("My Referral Stats", "SHOW_REF")],
-        [Markup.button.callback("Enter Mini App", "ENTER_APP")],
-        [Markup.button.callback("Referral Leaderboard", "SHOW_LEADERBOARD")],
-        [Markup.button.url("Join News Channel", "https://t.me/+-vL_K7ydtfQ5NWE6"), Markup.button.url("Join Meme Channel", "https://t.me/+R76a4MOb-EQyYjky")]
-    ]));
+    ctx.reply("Welcome to the official TQA meme coin bot! 🚀\nChoose action:", MainMenuKeyboard());
 });
 
 bot.action("SHOW_LEADERBOARD", async (ctx) => {
     ctx.answerCbQuery();
 
     const leaderboard = await TryGetLeaderboard();
-    ctx.reply(leaderboard);
+    await ctx.editMessageText(leaderboard, BackToMenuKeyboard());
 });
 
-bot.action("CREATE_REF", (ctx) => {
+bot.action("CREATE_REF", async (ctx) => {
     ctx.answerCbQuery();
 
     const encodedId = Encode(ctx.from.id);
 
-    ctx.reply(`Succesfully created a referral link! Link: https://t.me/tqa_coin_bot?start=${encodedId}`);
+    await ctx.editMessageText(`Succesfully created a referral link! Link: https://t.me/tqa_coin_bot?start=${encodedId}`, BackToMenuKeyboard());
 });
 
 bot.action("SHOW_REF", async (ctx) => {
@@ -56,19 +51,25 @@ bot.action("SHOW_REF", async (ctx) => {
     const res = await TryGetRefCount(ctx.from.id);
 
     if(!res || res.rows.length === 0){
-        ctx.reply("You have not referred anyone yet.");
+        await ctx.editMessageText("You have not referred anyone yet.", BackToMenuKeyboard());
         return;
     }
 
     const count = Number(res.rows[0].referral_count);
 
-    ctx.reply(`You have referred ${count} user${count === 1 ? "" : "s"} 🚀`);
+    await ctx.editMessageText(`You have referred ${count} user${count === 1 ? "" : "s"} 🚀`, BackToMenuKeyboard());
 });
 
-bot.action("ENTER_APP", (ctx) => {
+bot.action("ENTER_APP", async (ctx) => {
     ctx.answerCbQuery();
 
-    ctx.reply("This button will open the mini-app");
+    await ctx.editMessageText("This button will open the mini-app", BackToMenuKeyboard());
+});
+
+bot.action("BACK_TO_MENU", async (ctx) =>{
+    ctx.answerCbQuery();
+
+    await ctx.editMessageText("Welcome to the official TQA meme coin bot! 🚀\nChoose action:", MainMenuKeyboard());
 });
 
 bot.launch().then(() => console.log("Bot is running!")).catch((err) => console.error("Bot launch failed:", err));
@@ -146,4 +147,17 @@ function Encode(str){
 
 function Decode(str){
     return parseInt(Buffer.from(str, "base64url").toString("utf-8"));
+}
+
+function MainMenuKeyboard(){
+    return Markup.inlineKeyboard([
+        [Markup.button.callback("Create Referral Link", "CREATE_REF"), Markup.button.callback("My Referral Stats", "SHOW_REF")],
+        [Markup.button.callback("Enter Mini App", "ENTER_APP")],
+        [Markup.button.callback("Referral Leaderboard", "SHOW_LEADERBOARD")],
+        [Markup.button.url("Join News Channel", "https://t.me/+-vL_K7ydtfQ5NWE6"), Markup.button.url("Join Meme Channel", "https://t.me/+R76a4MOb-EQyYjky")]
+    ]);
+}
+
+function BackToMenuKeyboard(){
+    return Markup.inlineKeyboard([[Markup.button.callback("⬅️ Go back", "BACK_TO_MENU")]]);
 }
