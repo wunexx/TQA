@@ -62,7 +62,7 @@ bot.action("SHOW_REF", async (ctx) => {
 bot.action("ENTER_APP", async (ctx) => {
     ctx.answerCbQuery();
 
-    await ctx.editMessageText("This button will open the mini-app", BackToMenuKeyboard());
+    await ctx.editMessageText("This button will open the mini-app. TEST TEST TEST", BackToMenuKeyboard());
 });
 
 bot.action("BACK_TO_MENU", async (ctx) =>{
