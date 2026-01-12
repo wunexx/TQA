@@ -19,7 +19,7 @@ function App() {
       </div>
       
       <footer>
-        <p>with love from tqa❤️</p>
+        <p>with love from tqa❤️ v0.1</p>
       </footer>
     </>
   )
