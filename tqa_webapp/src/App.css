@@ -3,6 +3,8 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+
+  color: var(--tg-text);
 }
 
 nav, .about-us, .our-plans{
@@ -22,5 +24,12 @@ ul{
   display: flex;
   flex-direction: row;
   gap: 50px;
+}
+
+li{
+  background-color: var(--tg-button);
+  color: var(--tg-button-text);
+  padding: 5px;
+  border-radius: 5px;
 }
 
