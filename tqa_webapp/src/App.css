@@ -1,0 +1,26 @@
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+nav, .about-us, .our-plans{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+}
+
+footer{
+  padding: 20px;
+}
+
+ul{
+  list-style-type: none;
+  display: flex;
+  flex-direction: row;
+  gap: 50px;
+}
+
