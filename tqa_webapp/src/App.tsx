@@ -1,25 +1,43 @@
-import './App.css'
+import './App.css';
+import { NavButton } from './components/NavButton';
+import { Clicker } from './components/Clicker';
 
 function App() {
+
+  //console.log(window.Telegram?.WebApp?.version);
+
   return (
     <>
       <nav>
-        <ul>
-          <li>About us</li>
-          <li>Our plans</li>
-        </ul>
+          <NavButton text="About Us🚀" link="#about"></NavButton>
+          <NavButton text="Game🎯" link="#game"></NavButton>
+          <NavButton text="Upgrades💪" link="#upgrades"></NavButton>
+          <NavButton text="Leaderboards🏆" link="#leaderboards"></NavButton>
       </nav>
 
-      <div className="about-us">
+      <div id="about">
+        <h2>About us🚀</h2>
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
       </div>
 
-      <div className="our-plans">
+      <div id="game">
+        <h2>Clicker👆</h2>
+        <p>*click to earn TQA coins✨*</p>
+        <Clicker></Clicker>
+      </div>
+
+      <div id="upgrades">
+        <h2>Upgrades💪</h2>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      </div>
+
+      <div id="leaderboards">
+        <h2>Leaderboards🏆</h2>
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
       </div>
       
       <footer>
-        <p>with love from tqa❤️ v0.1</p>
+        <p>with love from tqa❤️ v0.2</p>
       </footer>
     </>
   )

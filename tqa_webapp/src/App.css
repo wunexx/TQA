@@ -4,40 +4,94 @@
 #root {
   width: 100%;
   min-height: 100vh;
+
   display: flex;
   flex-direction: column;
+  gap: 10px;
 
-  color: var(--tg-hint);
+  padding: 10px;
 }
 
-nav, .about-us, .our-plans{
+nav, #about, #game, .nav-btn, .clicker, #upgrades, #leaderboards{
   display: flex;
   align-items: center;
   justify-content: center;
-
-  padding: 20px;
+}
+#about, #game, footer, .nav-btn, #upgrades, #leaderboards{
+  flex-direction: column;
+  background-color: var(--tg-theme-secondary-bg-color);
+  padding: 15px;
+  border-radius: 15px;
+  gap: 5px;
 }
 
-footer{
-  padding: 20px;
-}
-
-ul{
-  list-style-type: none;
-  display: flex;
-  flex-direction: row;
-  gap: 50px;
-  width: 100%;
-  justify-content: center;
-  align-items: center;
-}
-
-li{
-  flex: 1 1 calc(50% - 10px);
-  background-color: var(--tg-hint);
-  color: var(--tg-text);
-  padding: 5px;
-  border-radius: 5px;
+.clicker{
+  flex-direction: column;
   text-align: center;
+  gap: 10px;
 }
 
+p{
+  color: var(--tg-theme-hint-color);
+}
+
+h1, h2, h3, a{
+  color: var(--tg-theme-text-color);
+}
+
+a{
+  font-weight: bold;
+}
+
+nav{
+  flex-direction: row;
+  flex-wrap: wrap;  
+  gap: 10px;
+}
+
+.nav-btn{
+  flex: 1 1 calc(50% - 10px);
+  text-decoration: none;
+  transition: ease 0.3s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-btn:hover{
+  filter: brightness(1.2);
+}
+
+.clicker-button{
+  aspect-ratio: 1/1;
+  width: 100px;
+
+  background-color: var(--tg-theme-section-separator-color);
+  background-size: cover;
+  background-image: url("icon.png");
+
+  border-radius: 50%;
+
+  border: 2px solid var(--tg-theme-bg-color);
+  outline: 1px solid var(--tg-theme-text-color);
+
+  transition: 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; 
+}
+
+.clicker-button:hover{
+  transform: scale(1.05);
+  cursor: pointer;
+}
+
+
+@media (hover: none) and (pointer: coarse) {
+  .nav-btn:hover,
+  .clicker-button:hover {
+    transform: none;
+    filter: none;
+  }
+}
+
+.clicker-button:active{
+  transform: scale(0.9);
+}
