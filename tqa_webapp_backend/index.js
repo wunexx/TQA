@@ -1,6 +1,32 @@
+import express from "express";
+
 const { Pool } = require("pg");
 
 const pool = new Pool({connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }});
+
+const app = express();
+
+app.listen(process.env.PORT || 3000, () => console.log("Server running"));
+
+app.use(express.json());
+
+app.get("/api/getcoins/:id", async (message, reply) =>{
+    const coins = await GetCoinCount(message.params.id);
+    reply.send(coins);
+});
+
+app.get("/api/getmult/:id", async (message, reply) => {
+    const mult = await GetCoinMultiplier(message.params.id);
+    reply.send(mult);
+});
+
+app.post("/api/addcoins", async (message, reply) => {
+    const id = message.body.telegram_id;
+    const amount = message.body.amount;
+
+    const newCoins = await AddCoinsToUser(id, amount);
+    reply.send(newCoins);
+});
 
 async function GetCoinMultiplier(telegram_id){
     const client = await pool.connect();
@@ -47,5 +73,3 @@ async function GetCoinCount(telegram_id){
         client.release();
     }
 }
-//SELECT pending_coin_count FROM users WHERE telegram_id = '1133698943';
-//UPDATE users SET pending_coin_count = pending_coin_count + 100 WHERE telegram_id = '1133698943';

@@ -24,9 +24,9 @@ bot.start(async (ctx) => {
     let str = "";
 
     if(referredBy && added)
-        str = "You have been invited by someone! ";
+        str = "You have been invited by someone!";
 
-    ctx.reply("Welcome to the official TQA meme coin bot! 🚀\nChoose action:", MainMenuKeyboard());
+    ctx.reply(`Welcome to the official TQA meme coin bot! ${str}🚀\nChoose action:`, MainMenuKeyboard());
 });
 
 bot.action("SHOW_LEADERBOARD", async (ctx) => {
@@ -41,7 +41,7 @@ bot.action("CREATE_REF", async (ctx) => {
 
     const encodedId = Encode(ctx.from.id);
 
-    await ctx.editMessageText(`Succesfully created a referral link! ⭐\nLink: https://t.me/tqa_coin_bot?start=${encodedId}`, BackToMenuKeyboard());
+    await ctx.editMessageText(`Successfully created a referral link! ⭐\nLink: https://t.me/tqa_coin_bot?start=${encodedId}`, BackToMenuKeyboard());
 });
 
 bot.action("SHOW_REF", async (ctx) => {
@@ -49,21 +49,15 @@ bot.action("SHOW_REF", async (ctx) => {
 
     const res = await TryGetRefCount(ctx.from.id);
 
-    if(!res || res.rows.length === 0){
-        await ctx.editMessageText("You have not referred anyone yet.", BackToMenuKeyboard());
-        return;
-    }
-
-    const count = Number(res.rows[0].referral_count);
-
-    await ctx.editMessageText(`You have referred ${count} user${count === 1 ? "" : "s"} 🚀`, BackToMenuKeyboard());
+    await ctx.editMessageText(`You have referred ${res.ref_count} user${res.ref_count === 1 ? "" : "s"} 🚀 Your current coin multiplier is ${res.mult}`, BackToMenuKeyboard());
 });
-
+/*
 bot.action("ENTER_APP", async (ctx) => {
     ctx.answerCbQuery();
 
     await ctx.editMessageText("This button will open the mini-app. TEST TEST TEST", BackToMenuKeyboard());
 });
+*/
 
 bot.action("BACK_TO_MENU", async (ctx) =>{
     ctx.answerCbQuery();
@@ -75,8 +69,11 @@ async function TryGetRefCount(telegram_id){
     const client = await pool.connect();
 
     try{
-        const count = await client.query("SELECT referral_count FROM users WHERE telegram_id = $1", [telegram_id]);
-        return count;
+        const res = await client.query("SELECT referral_count, coin_multiplier FROM users WHERE telegram_id = $1", [telegram_id]);
+
+    if(res.rows.length === 0) return { ref_count: 0, mult: 1 };
+
+        return {ref_count: res.rows[0].referral_count, mult: res.rows[0].coin_multiplier};
     }
     finally{
         client.release();
@@ -98,6 +95,7 @@ async function TryAddUser(telegramId, referredBy = null, username = null, firstN
             const refCheck = await client.query("SELECT 1 FROM users WHERE telegram_id = $1", [referredBy]);
             if(refCheck.rows.length > 0) {
                 await client.query("UPDATE users SET referral_count = referral_count + 1 WHERE telegram_id = $1", [referredBy]);
+                await client.query("UPDATE users SET coin_multiplier = coin_multiplier + 0.05 WHERE telegram_id = $1", [referredBy]);
             }
         }
 
