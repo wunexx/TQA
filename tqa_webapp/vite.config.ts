@@ -6,19 +6,21 @@ export default defineConfig({
   plugins: [react()],
   base: '/TQA/',
 
-  //idk
+  //cloudflared tunnel stuff below
 
+  /*
   server: {
     host: true,
     port: 5173,
     strictPort: false,
     allowedHosts: [
-      'founded-communities-star-furnished.trycloudflare.com'
+      'simultaneously-lectures-flood-swaziland.trycloudflare.com'
     ],
     hmr: {
       protocol: 'wss',
-      host: 'founded-communities-star-furnished.trycloudflare.com',
+      host: 'simultaneously-lectures-flood-swaziland.trycloudflare.com',
       port: 443,
     }
   }
+  */
 })

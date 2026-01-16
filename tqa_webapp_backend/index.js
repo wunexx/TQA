@@ -14,7 +14,13 @@ app.listen(process.env.PORT || 3000, () => console.log("Server running"));
 
 app.use(express.json());
 
-app.use(cors({origin: "https://wunexx.github.io"}))
+app.use(cors({
+  origin: [
+    "https://wunexx.github.io",
+    "https://web.telegram.org",
+    "https://t.me"
+  ]
+}));
 
 app.get("/api/getcoins/:id", async (req, res) => {
     const coins = await GetCoinCount(req.params.id);

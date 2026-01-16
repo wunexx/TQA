@@ -5,6 +5,12 @@ import { Clicker } from './components/Clicker';
 function App() {
 
   //console.log(window.Telegram?.WebApp?.version);
+  if(!window.Telegram?.WebApp?.initDataUnsafe?.user?.id){
+    document.body.style.backgroundColor = "black";
+    return(<>
+      <p style={{color: "white"}}>Open in Telegram to continue.</p>
+    </>)
+  }
 
   return (
     <>
