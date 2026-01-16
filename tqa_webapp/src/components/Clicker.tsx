@@ -7,7 +7,7 @@ interface ClickerProps{
 export function Clicker({ startCount = 0 }: ClickerProps){
     const [count, setCount] = useState(startCount);
     const [multiplier, setMultiplier] = useState(1);
-    const [pendingIncrement, setPendingIncrement] = useState(0);
+    const [_, setPendingIncrement] = useState(0);
 
     const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
     const backendUrl = "https://zesty-art-production.up.railway.app";
