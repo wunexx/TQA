@@ -15,11 +15,14 @@ app.listen(process.env.PORT || 3000, () => console.log("Server running"));
 app.use(express.json());
 
 app.use(cors({
-  origin: [
-    "https://wunexx.github.io",
-    "https://web.telegram.org",
-    "https://t.me"
-  ]
+    origin: true
+    /*
+    origin: [
+        "https://wunexx.github.io",
+        "https://web.telegram.org",
+        "https://t.me"
+    ]
+    */
 }));
 
 app.get("/api/getcoins/:id", async (req, res) => {
@@ -55,17 +58,17 @@ async function GetCoinMultiplier(telegram_id){
 }
 
 async function AddCoinsToUser(telegram_id, amount) {
-  const client = await pool.connect();
+    const client = await pool.connect();
 
-  try {
-    const res = await client.query(`UPDATE users SET pending_coin_count = COALESCE(pending_coin_count, 0) + $1 WHERE telegram_id = $2 RETURNING pending_coin_count`, [amount, telegram_id]);
+    try {
+        const res = await client.query(`UPDATE users SET pending_coin_count = COALESCE(pending_coin_count, 0) + $1 WHERE telegram_id = $2 RETURNING pending_coin_count`, [amount, telegram_id]);
 
-    if (res.rowCount === 0) return false;
+        if (res.rowCount === 0) return false;
 
-    return res.rows[0].pending_coin_count;
-  } finally {
-    client.release();
-  }
+        return res.rows[0].pending_coin_count;
+    } finally {
+        client.release();
+    }
 }
 
 async function GetCoinCount(telegram_id){
