@@ -1,6 +1,10 @@
 import express from "express";
 
-const { Pool } = require("pg");
+import pkg from "pg";
+
+import cors from "cors";
+
+const { Pool } = pkg;
 
 const pool = new Pool({connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }});
 
@@ -10,22 +14,22 @@ app.listen(process.env.PORT || 3000, () => console.log("Server running"));
 
 app.use(express.json());
 
-app.get("/api/getcoins/:id", async (message, reply) =>{
-    const coins = await GetCoinCount(message.params.id);
-    reply.send(coins);
+app.use(cors({origin: "https://wunexx.github.io"}))
+
+app.get("/api/getcoins/:id", async (req, res) => {
+    const coins = await GetCoinCount(req.params.id);
+    res.json({coins: coins});
 });
 
-app.get("/api/getmult/:id", async (message, reply) => {
-    const mult = await GetCoinMultiplier(message.params.id);
-    reply.send(mult);
+app.get("/api/getmult/:id", async (req, res) => {
+    const mult = await GetCoinMultiplier(req.params.id);
+    res.json({multiplier: mult});
 });
 
-app.post("/api/addcoins", async (message, reply) => {
-    const id = message.body.telegram_id;
-    const amount = message.body.amount;
-
-    const newCoins = await AddCoinsToUser(id, amount);
-    reply.send(newCoins);
+app.post("/api/addcoins", async (req, res) => {
+    const { telegram_id, amount } = req.body;
+    const newCoins = await AddCoinsToUser(telegram_id, amount);
+    res.json({new_coins: newCoins});
 });
 
 async function GetCoinMultiplier(telegram_id){

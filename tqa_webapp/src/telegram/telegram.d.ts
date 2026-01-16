@@ -1,3 +1,11 @@
+interface TelegramUser{
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  language_code?: string;
+}
+
 interface TelegramWebApp {
   ready(): void;
   expand(): void;
@@ -29,7 +37,12 @@ interface TelegramWebApp {
   };
 
   initData?: string;
-  initDataUnsafe?: any;
+  initDataUnsafe?: {
+    user?: TelegramUser;
+    chat?: {id: number, type: string, title?: string };
+    start_param?: string;
+    query_id?: string;
+  }
 
   version?: string;
 
