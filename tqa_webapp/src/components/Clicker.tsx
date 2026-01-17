@@ -54,7 +54,7 @@ export function Clicker({ startCount = 0 }: ClickerProps){
     return(
         <div className="clicker">
             <h2 className="clicker-count">{count.toFixed(6) + " TQA"}</h2>
-            {/* <p>{`id: ${telegramId} mult: ${multiplier}`}</p> */}
+            <p>{fetch($`${backendUrl}/api/test`).then(res => res.json()).then(data => data.hi)}</p>
             <input type="button" onClick={handleClick} className="clicker-button"/>
         </div>
     )
