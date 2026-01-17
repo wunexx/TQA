@@ -8,7 +8,7 @@ const { Pool } = pkg;
 
 const pool = new Pool({connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }});
 
-await pool.query(`INSERT INTO users (telegram_id, username, first_name, referred_by_id, referral_count, coin_multiplier, pending_coin_amount) VALUES ("test123", "test", "test", test1234, 0, 1, 100)`);
+await pool.query(`INSERT INTO users (telegram_id, username, first_name, referred_by_id, referral_count, coin_multiplier, pending_coin_count) VALUES ('test123', 'test', 'test', 'test1234', 0, 1, 100)`);
 
 const app = express();
 
