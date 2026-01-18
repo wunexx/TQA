@@ -34,6 +34,11 @@ app.use(cors({
     allowedHeaders: ["Content-Type"]
 }));
 
+app.use((req, res, next) => {
+    console.log("REQ:", req.method, req.url);
+    next();
+});
+
 app.get("/api/getcoins/:id", async (req, res) => {
     const coins = await GetCoinCount(req.params.id);
     res.json({coins: coins});

@@ -13,11 +13,11 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     allowedHosts: [
-      'director-gardening-annie-contract.trycloudflare.com'
+      'see-plan-combat-cheats.trycloudflare.com'
     ],
     hmr: {
       protocol: 'wss',
-      host: 'director-gardening-annie-contract.trycloudflare.com',
+      host: 'see-plan-combat-cheats.trycloudflare.com',
       port: 443,
     }
   }

@@ -13,6 +13,14 @@ export function Clicker({ startCount = 0 }: ClickerProps){
     const backendUrl = "https://zesty-art-production.up.railway.app";
 
     useEffect(() => {
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+        tg.ready();
+        tg.expand();
+    }
+    }, []);
+
+    useEffect(() => {
         if(!telegramId) return;
 
         fetch(`${backendUrl}/api/getcoins/${telegramId}`)
