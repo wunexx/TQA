@@ -1,78 +1,89 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react";
 
-interface ClickerProps{
-    startCount?: number;
+interface ClickerProps {
+  startCount?: number;
 }
 
-export function Clicker({ startCount = 0 }: ClickerProps){
-    const [count, setCount] = useState(startCount);
-    const [multiplier, setMultiplier] = useState(1);
-    const [_, setPendingIncrement] = useState(0);
+const BACKEND_URL = "https://zesty-art-production.up.railway.app";
 
-    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    const backendUrl = "https://zesty-art-production.up.railway.app";
+export function Clicker({ startCount = 0 }: ClickerProps) {
+  const [count, setCount] = useState(startCount);
+  const [multiplier, setMultiplier] = useState(1);
+  const [pendingIncrement, setPendingIncrement] = useState(0);
 
-    useEffect(() => {
+  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+
+  useEffect(() => {
     const tg = window.Telegram?.WebApp;
-    if (tg) {
-        tg.ready();
-        tg.expand();
-    }
-    }, []);
+    if (!tg) return;
 
-    useEffect(() => {
-        if(!telegramId) return;
+    tg.ready();
+    tg.expand();
+  }, []);
 
-        fetch(`${backendUrl}/api/getcoins/${telegramId}`)
-            .then(res => res.json())
-            .then(data => setCount(data.coins))
-            .catch(err => console.error("Failed to sync coins:", err));
+  useEffect(() => {
+    if (!telegramId) return;
 
-        fetch(`${backendUrl}/api/getmult/${telegramId}`)
-            .then(res => res.json())
-            .then(data => setMultiplier(data.multiplier))
-            .catch(err => console.error("Failed to sync multiplier:", err));
+    const fetchUserData = async () => {
+      try {
+        const [coinsRes, multRes] = await Promise.all([
+          fetch(`${BACKEND_URL}/api/getcoins/${telegramId}`),
+          fetch(`${BACKEND_URL}/api/getmult/${telegramId}`)
+        ]);
 
-        const interval = setInterval(() => {
-            setPendingIncrement(prev => {
-                if (prev > 0) {
-                    fetch(`${backendUrl}/api/addcoins`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ telegram_id: telegramId, amount: prev })
-                    }).catch(err => console.error("Failed to add coins:", err));
-                }
-                return 0;
-            });
-        }, 2000);
+        const coinsData = await coinsRes.json();
+        const multData = await multRes.json();
 
-        return () => clearInterval(interval);
-    }, [telegramId]);
-
-    const [testMsg, setTestMsg] = useState("");
-
-    useEffect(() => {
-        fetch(`${backendUrl}/api/test`)
-            .then(res => res.json())
-            .then(data => setTestMsg(data.hi));
-    }, []);
-
-
-    const handleClick = () => {
-        if (!telegramId) return;
-
-        const increment = parseFloat((0.001 * multiplier).toFixed(6));
-        setCount(prev => prev + increment);
-        setPendingIncrement(prev => prev + increment);
+        setCount(coinsData.coins);
+        setMultiplier(multData.multiplier);
+      } catch (err) {
+        console.error("Failed to sync user data:", err);
+      }
     };
 
-    if (!telegramId) return <p>Open this inside Telegram to play.</p>;
+    fetchUserData();
 
-    return(
-        <div className="clicker">
-            <h2 className="clicker-count">{count.toFixed(6) + " TQA"}</h2>
-            <p>{testMsg}</p>
-            <input type="button" onClick={handleClick} className="clicker-button"/>
-        </div>
-    )
+    const interval = setInterval(() => {
+      setPendingIncrement(prev => {
+        if (prev <= 0) return 0;
+
+        fetch(`${BACKEND_URL}/api/addcoins`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegram_id: telegramId,
+            amount: prev
+          })
+        }).catch(err => console.error("Failed to add coins:", err));
+
+        return 0;
+      });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [telegramId]);
+
+  const handleClick = () => {
+    if (!telegramId) return;
+
+    const increment = Number((0.001 * multiplier).toFixed(6));
+
+    setCount(c => c + increment);
+    setPendingIncrement(p => p + increment);
+  };
+
+  if (!telegramId) {
+    return <p>Open this inside Telegram to play.</p>;
+  }
+
+  return (
+    <div className="clicker">
+      <h2 className="clicker-count">{count.toFixed(6)} TQA</h2>
+      <input
+        type="button"
+        className="clicker-button"
+        onClick={handleClick}
+      />
+    </div>
+  );
 }

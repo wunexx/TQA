@@ -7,7 +7,7 @@ export default defineConfig({
   base: '/TQA/',
 
   //cloudflared tunnel stuff below
-
+  /*
   server: {
     host: true,
     port: 5173,
@@ -21,4 +21,5 @@ export default defineConfig({
       port: 443,
     }
   }
+  */
 })
