@@ -8,19 +8,17 @@ export default defineConfig({
 
   //cloudflared tunnel stuff below
 
-  /*
   server: {
     host: true,
     port: 5173,
     strictPort: false,
     allowedHosts: [
-      'simultaneously-lectures-flood-swaziland.trycloudflare.com'
+      'director-gardening-annie-contract.trycloudflare.com'
     ],
     hmr: {
       protocol: 'wss',
-      host: 'simultaneously-lectures-flood-swaziland.trycloudflare.com',
+      host: 'director-gardening-annie-contract.trycloudflare.com',
       port: 443,
     }
   }
-  */
 })

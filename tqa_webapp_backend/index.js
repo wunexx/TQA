@@ -17,14 +17,21 @@ app.listen(process.env.PORT || 3000, () => console.log("Server running"));
 app.use(express.json());
 
 app.use(cors({
-    origin: true
-    /*
-    origin: [
-        "https://wunexx.github.io",
-        "https://web.telegram.org",
-        "https://t.me"
-    ]
-    */
+    origin: (origin, callback) => {
+        const allowed = [
+            "https://wunexx.github.io",
+            "https://web.telegram.org",
+            "https://t.me"
+        ];
+
+        if (!origin || allowed.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"]
 }));
 
 app.get("/api/getcoins/:id", async (req, res) => {

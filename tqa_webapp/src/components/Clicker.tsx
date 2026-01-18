@@ -41,6 +41,15 @@ export function Clicker({ startCount = 0 }: ClickerProps){
         return () => clearInterval(interval);
     }, [telegramId]);
 
+    const [testMsg, setTestMsg] = useState("");
+
+    useEffect(() => {
+        fetch(`${backendUrl}/api/test`)
+            .then(res => res.json())
+            .then(data => setTestMsg(data.hi));
+    }, []);
+
+
     const handleClick = () => {
         if (!telegramId) return;
 
@@ -54,7 +63,7 @@ export function Clicker({ startCount = 0 }: ClickerProps){
     return(
         <div className="clicker">
             <h2 className="clicker-count">{count.toFixed(6) + " TQA"}</h2>
-            <p>{fetch($`${backendUrl}/api/test`).then(res => res.json()).then(data => data.hi)}</p>
+            <p>{testMsg}</p>
             <input type="button" onClick={handleClick} className="clicker-button"/>
         </div>
     )
