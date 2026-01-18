@@ -1,14 +1,23 @@
 import './App.css';
 import { NavButton } from './components/NavButton';
 import { Clicker } from './components/Clicker';
+import { useState, useEffect } from 'react';
 
 function App() {
 
   //console.log(window.Telegram?.WebApp?.version);
+  const [testMsg, setTestMsg] = useState("");
+
+  useEffect(() => {
+      fetch(`https://zesty-art-production.up.railway.app/api/test`)
+          .then(res => res.json())
+          .then(data => setTestMsg(data.hi));
+  }, []);
+
   if(!window.Telegram?.WebApp?.initDataUnsafe?.user?.id){
     document.body.style.backgroundColor = "black";
     return(<>
-      <p style={{color: "white"}}>Open in Telegram to continue.</p>
+      <p style={{color: "white"}}>{testMsg} Open in Telegram to continue.</p>
     </>)
   }
 

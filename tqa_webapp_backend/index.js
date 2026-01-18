@@ -35,8 +35,15 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
-    console.log("REQ:", req.method, req.url);
-    next();
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
 });
 
 app.get("/api/getcoins/:id", async (req, res) => {
