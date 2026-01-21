@@ -33,7 +33,7 @@ bot.action("SHOW_LEADERBOARD", async (ctx) => {
     ctx.answerCbQuery();
 
     const leaderboard = await TryGetLeaderboard();
-    await ctx.editMessageText(leaderboard, BackToMenuKeyboard());
+    await EditMessage(ctx, leaderboard, BackToMenuKeyboard());
 });
 
 bot.action("CREATE_REF", async (ctx) => {
@@ -41,7 +41,7 @@ bot.action("CREATE_REF", async (ctx) => {
 
     const encodedId = Encode(ctx.from.id);
 
-    await ctx.editMessageText(`Successfully created a referral link! ⭐\nLink: https://t.me/tqa_coin_bot?start=${encodedId}`, BackToMenuKeyboard());
+    await EditMessage(ctx, `Successfully created a referral link! ⭐\nLink: https://t.me/tqa_coin_bot?start=${encodedId}`, BackToMenuKeyboard());
 });
 
 bot.action("SHOW_REF", async (ctx) => {
@@ -49,7 +49,7 @@ bot.action("SHOW_REF", async (ctx) => {
 
     const res = await TryGetRefCount(ctx.from.id);
 
-    await ctx.editMessageText(`You have referred ${res.ref_count} user${res.ref_count === 1 ? "" : "s"} 🚀 Your current coin multiplier is ${res.mult}`, BackToMenuKeyboard());
+    await EditMessage(ctx, `You have referred ${res.ref_count} user${res.ref_count === 1 ? "" : "s"} 🚀 Your current coin multiplier is ${res.mult}`, BackToMenuKeyboard());
 });
 /*
 bot.action("ENTER_APP", async (ctx) => {
@@ -62,7 +62,7 @@ bot.action("ENTER_APP", async (ctx) => {
 bot.action("BACK_TO_MENU", async (ctx) =>{
     ctx.answerCbQuery();
 
-    await ctx.editMessageText("Welcome to the official TQA meme coin bot! 🚀\nChoose action:", MainMenuKeyboard());
+    await EditMessage(ctx, "Welcome to the official TQA meme coin bot! 🚀\nChoose action:", MainMenuKeyboard());
 });
 
 async function TryGetRefCount(telegram_id){
@@ -155,4 +155,15 @@ function MainMenuKeyboard(){
 
 function BackToMenuKeyboard(){
     return Markup.inlineKeyboard([[Markup.button.callback("⬅️ Go back", "BACK_TO_MENU")]]);
+}
+
+async function EditMessage(ctx, text, keyboard = null){
+    try{
+        await ctx.editMessageText(text, keyboard);
+    }
+    catch(err){
+        if (err?.response?.description?.includes("message is not modified")) 
+            return;
+        console.error("Edit failed:", err);
+    }
 }

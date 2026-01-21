@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import pkg from "pg";
+import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 
 const { Pool } = pkg;
 
@@ -19,11 +21,14 @@ const app = express();
 app.use(express.json());
 
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type"]
+  origin: ["https://wunexx.github.io"],
+  methods: ["GET", "POST"]
 }));
 
+app.use(rateLimit({
+  windowMs: 10 * 1000,
+  max: 50
+}));
 
 app.get("/api/getcoins/:id", async (req, res) => {
   try {
@@ -47,14 +52,20 @@ app.get("/api/getmult/:id", async (req, res) => {
 
 app.post("/api/addcoins", async (req, res) => {
   try {
-    const { telegram_id, amount } = req.body;
-    const newCoins = await AddCoinsToUser(telegram_id, amount);
+    const { initData, amount } = req.body;
+    const user = verifyTelegram(initData);
+
+    const safeAmount = Number(amount);
+    if (!Number.isFinite(safeAmount) || safeAmount <= 0 || safeAmount > 1)
+      return res.status(400).json({ error: "Invalid amount" });
+
+    const newCoins = await AddCoinsToUser(user.id, safeAmount);
     res.json({ new_coins: newCoins });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(401).json({ error: "Unauthorized" });
   }
 });
+
 
 app.get("/api/test", async (req, res) => {
   res.json({ hi: "hi" });
@@ -100,6 +111,31 @@ async function GetCoinCount(telegram_id) {
   } finally {
     client.release();
   }
+}
+
+function verifyTelegram(initData) {
+  const params = new URLSearchParams(initData);
+  const hash = params.get("hash");
+  params.delete("hash");
+
+  const dataCheckString = [...params.entries()]
+    .sort()
+    .map(([k, v]) => `${k}=${v}`)
+    .join("\n");
+
+  const secret = crypto
+    .createHash("sha256")
+    .update(process.env.BOT_TOKEN)
+    .digest();
+
+  const hmac = crypto
+    .createHmac("sha256", secret)
+    .update(dataCheckString)
+    .digest("hex");
+
+  if (hmac !== hash) throw new Error("Invalid Telegram signature");
+
+  return JSON.parse(params.get("user"));
 }
 
 const PORT = process.env.PORT || 3000;

@@ -11,6 +11,7 @@ export function Clicker({ startCount = 0 }: ClickerProps) {
   const [multiplier, setMultiplier] = useState(1);
   const [pendingIncrement, setPendingIncrement] = useState(0);
 
+  const initData = window.Telegram?.WebApp?.initData;
   const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export function Clicker({ startCount = 0 }: ClickerProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            telegram_id: telegramId,
+            initData,
             amount: prev
           })
         }).catch(err => console.error("Failed to add coins:", err));
