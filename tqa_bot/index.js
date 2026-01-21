@@ -5,7 +5,7 @@ const { Pool } = require("pg");
 const pool = new Pool({connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }});
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-bot.launch({webhook: {domain: "https://tqa-bot.up.railway.app", port: process.env.PORT || 8080}}).then(() => console.log("Bot started")).catch(err => console.error("Failed to launch bot:", err));
+bot.launch().then(() => console.log("Bot started")).catch(err => console.error("Failed to launch bot:", err));
 
 bot.start(async (ctx) => {
     let referredBy = null;
