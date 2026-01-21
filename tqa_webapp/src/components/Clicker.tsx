@@ -4,7 +4,7 @@ interface ClickerProps {
   startCount?: number;
 }
 
-const BACKEND_URL = "https://zesty-art-production.up.railway.app";
+const BACKEND_URL = "https://tqa-backend.up.railway.app";
 
 export function Clicker({ startCount = 0 }: ClickerProps) {
   const [count, setCount] = useState(startCount);

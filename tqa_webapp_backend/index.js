@@ -25,6 +25,8 @@ app.use(cors({
   methods: ["GET", "POST"]
 }));
 
+app.set('trust proxy', 1);
+
 app.use(rateLimit({
   windowMs: 10 * 1000,
   max: 50
