@@ -12,11 +12,11 @@ function App() {
     </>)
   }
 
-  const [leaderboard, setLeaderboard] = useState("Loading the leaderboard...");
+  const [leaderboard, setLeaderboard] = useState(["Loading the leaderboard..."]);
 
   useEffect(() => {
     fetch("https://tqa-backend.up.railway.app/api/getleaderboard").then(data => data.json()).then(res => {setLeaderboard(res.leaderboard)});
-  }, [])
+  }, []);
 
 
   return (
@@ -46,7 +46,9 @@ function App() {
 
       <div id="leaderboards">
         <h2>Leaderboards🏆</h2>
-        <p>{leaderboard}</p>
+        {
+          leaderboard.length ? leaderboard.map((line, index) => (<p key={index}>{line}</p>)) : (<p>No coin earners yet👀</p>)
+        }
       </div>
       
       <footer>

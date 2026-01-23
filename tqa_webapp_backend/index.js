@@ -6,7 +6,7 @@ import rateLimit from "express-rate-limit";
 
 const { Pool } = pkg;
 
-const INCREMENT = 0.00026;
+const INCREMENT = 0.000026;
 
 let pool;
 try {
@@ -95,7 +95,7 @@ async function TryAddCoinsToUser(telegram_id, amount) {
   try {
     const res = await client.query(
       "UPDATE users SET pending_coin_count = COALESCE(pending_coin_count,0) + $1 WHERE telegram_id = $2 RETURNING pending_coin_count",
-      [amount, telegram_id]
+      [amount.toFixed(6), telegram_id]
     );
     if (res.rowCount === 0) return false;
     return res.rows[0].pending_coin_count;
@@ -125,16 +125,13 @@ async function TryGetCoinLeaderboard(){
 
     if(res.rows.length === 0) return "No coin earners yet👀";
 
-    let text = "";
+    const medals = ["🥇", "🥈", "🥉"];
 
-    res.rows.forEach((row, index) => {
-      const medals = ["🥇", "🥈", "🥉"];
+    return res.rows.map((row, index) => {
       const badge = medals[index] || "🔹";
       const name = row.first_name || "Anonymous";
-      text += `${badge} ${name} – ${row.pending_coin_count}\n`;
+      return `${badge} ${name} - ${row.pending_coin_count}`;
     });
-
-    return text;
 
   } finally {
     client.release();
