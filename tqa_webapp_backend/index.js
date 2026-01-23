@@ -54,6 +54,17 @@ app.get("/api/getleaderboard", async (req, res) => {
   }
 });
 
+app.get("/api/getmult/:id", async (req, res) =>{
+  try{
+    const mult = await TryGetCoinMultiplier(req.params.id);
+
+    res.json({multiplier: mult});
+  }
+  catch (err){
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.post("/api/addcoins", async (req, res) => {
   try {
     const { initData } = req.body;
@@ -72,7 +83,7 @@ app.post("/api/addcoins", async (req, res) => {
 
 
 app.get("/api/test", async (req, res) => {
-  console.log("working properly!");
+  //console.log("working properly!");
   res.json({ hi: "hi" });
 });
 

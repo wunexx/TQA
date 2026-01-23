@@ -12,6 +12,9 @@ function App() {
     </>)
   }
 
+  window.Telegram?.WebApp?.setBackgroundColor("#0D0B0B");
+  window.Telegram?.WebApp?.setHeaderColor("#0D0B0B");
+
   const [leaderboard, setLeaderboard] = useState(["Loading the leaderboard..."]);
 
   useEffect(() => {
@@ -47,7 +50,7 @@ function App() {
       <div id="leaderboards">
         <h2>Leaderboards🏆</h2>
         {
-          (Array.isArray(leaderboard) && leaderboard.length > 0) ? leaderboard.map((line, index) => (<p key={index}>{line}</p>)) : (<p>No coin earners yet👀</p>)
+          (Array.isArray(leaderboard) && leaderboard.length > 0) ? leaderboard.map((line, index) => (<p key={index} className='leaderboard-row'>{line}</p>)) : (<p>No coin earners yet👀</p>)
         }
       </div>
       
