@@ -94,8 +94,8 @@ async function TryAddCoinsToUser(telegram_id, amount) {
   const client = await pool.connect();
   try {
     const res = await client.query(
-      "UPDATE users SET pending_coin_count = ROUND(pending_coin_count + $1, 6) WHERE telegram_id = $2 RETURNING pending_coin_count",
-      [amount, telegram_id]
+      "UPDATE users SET pending_coin_count = pending_coin_count + $1 WHERE telegram_id = $2 RETURNING pending_coin_count",
+      [Number(amount.toFixed(6)), telegram_id]
     );
     if (res.rowCount === 0) return false;
     return res.rows[0].pending_coin_count;
