@@ -61,6 +61,7 @@ app.post("/api/addcoins", async (req, res) => {
 
 
 app.get("/api/test", async (req, res) => {
+  console.log("working properly!");
   res.json({ hi: "hi" });
 });
 
