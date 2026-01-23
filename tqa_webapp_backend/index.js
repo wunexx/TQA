@@ -6,6 +6,8 @@ import rateLimit from "express-rate-limit";
 
 const { Pool } = pkg;
 
+const INCREMENT = 0.00026;
+
 let pool;
 try {
   pool = new Pool({
@@ -35,17 +37,7 @@ app.use(rateLimit({
 app.get("/api/getcoins/:id", async (req, res) => {
   try {
     const coins = await GetCoinCount(req.params.id);
-    res.json({ coins });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-app.get("/api/getmult/:id", async (req, res) => {
-  try {
-    const mult = await GetCoinMultiplier(req.params.id);
-    res.json({ multiplier: mult });
+    res.json({coins: coins });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -54,14 +46,12 @@ app.get("/api/getmult/:id", async (req, res) => {
 
 app.post("/api/addcoins", async (req, res) => {
   try {
-    const { initData, amount } = req.body;
+    const { initData } = req.body;
     const user = verifyTelegram(initData);
 
-    const safeAmount = Number(amount);
-    if (!Number.isFinite(safeAmount) || safeAmount <= 0 || safeAmount > 1)
-      return res.status(400).json({ error: "Invalid amount" });
+    const mult = await GetCoinMultiplier(user.id);
 
-    const newCoins = await AddCoinsToUser(user.id, safeAmount);
+    const newCoins = await AddCoinsToUser(user.id, INCREMENT * mult);
     res.json({ new_coins: newCoins });
   } catch (err) {
     res.status(401).json({ error: "Unauthorized" });
@@ -140,5 +130,5 @@ function verifyTelegram(initData) {
   return JSON.parse(params.get("user"));
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
