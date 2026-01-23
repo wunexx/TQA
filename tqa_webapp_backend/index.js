@@ -46,7 +46,7 @@ app.get("/api/getcoins/:id", async (req, res) => {
 
 app.get("/api/getleaderboard", async (req, res) => {
   try{
-    const leaderboard = TryGetCoinLeaderboard();
+    const leaderboard = await TryGetCoinLeaderboard();
 
     res.json({leaderboard: leaderboard});
   } catch (err){
