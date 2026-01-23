@@ -123,6 +123,7 @@ function verifyTelegram(initData) {
 
   const hash = data.hash;
   delete data.hash;
+  delete data.signature;
 
   const dataCheckString = Object.keys(data)
     .sort()
@@ -139,6 +140,7 @@ function verifyTelegram(initData) {
 
   return JSON.parse(decodeURIComponent(data.user));
 }
+
 
 
 const PORT = process.env.PORT || 8080;
