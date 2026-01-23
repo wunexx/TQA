@@ -47,8 +47,13 @@ app.get("/api/getcoins/:id", async (req, res) => {
 app.post("/api/addcoins", async (req, res) => {
   try {
     const { initData } = req.body;
+
     const user = verifyTelegram(initData);
+
+    console.log(`Init data: ${initData}\nUser id: ${user.id}\nUsername: ${user.username}`)
+
     const mult = await GetCoinMultiplier(user.id);
+
     const newCoins = await AddCoinsToUser(user.id, INCREMENT * mult);
 
     console.log(`New coins: ${newCoins}\nMultiplier: ${mult}\nDelta: ${INCREMENT * mult}\nTelegram Id: ${user.id}`);
