@@ -47,13 +47,12 @@ app.get("/api/getcoins/:id", async (req, res) => {
 app.post("/api/addcoins", async (req, res) => {
   try {
     const { initData } = req.body;
-
-    console.log(initData);
     const user = verifyTelegram(initData);
-
     const mult = await GetCoinMultiplier(user.id);
-
     const newCoins = await AddCoinsToUser(user.id, INCREMENT * mult);
+
+    console.log(`New coins: ${newCoins}\nMultiplier: ${mult}\nDelta: ${INCREMENT * mult}\nTelegram Id: ${user.id}`);
+
     res.json({ new_coins: newCoins });
   } catch (err) {
     res.status(401).json({ error: "Unauthorized" });
