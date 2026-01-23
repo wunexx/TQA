@@ -48,6 +48,8 @@ app.post("/api/addcoins", async (req, res) => {
   try {
     const { initData } = req.body;
 
+    console.log(`Init data: ${initData}`);
+
     const user = verifyTelegram(initData);
 
     console.log(`Init data: ${initData}\nUser id: ${user.id}\nUsername: ${user.username}`)
