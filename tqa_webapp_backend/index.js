@@ -36,7 +36,7 @@ app.use(rateLimit({
 
 app.get("/api/getcoins/:id", async (req, res) => {
   try {
-    const coins = await GetCoinCount(req.params.id);
+    const coins = await TryGetCoinCount(req.params.id);
     res.json({coins: coins });
   } catch (err) {
     console.error(err);
@@ -44,21 +44,25 @@ app.get("/api/getcoins/:id", async (req, res) => {
   }
 });
 
+app.get("/api/getleaderboard", async (req, res) => {
+  try{
+    const leaderboard = TryGetCoinLeaderboard();
+
+    res.json({leaderboard: leaderboard});
+  } catch (err){
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.post("/api/addcoins", async (req, res) => {
   try {
     const { initData } = req.body;
-
-    console.log(`Init data: ${initData}`);
-
-    const user = verifyTelegram(initData);
-
-    console.log(`Init data: ${initData}\nUser id: ${user.id}\nUsername: ${user.username}`)
-
-    const mult = await GetCoinMultiplier(user.id);
-
-    const newCoins = await AddCoinsToUser(user.id, INCREMENT * mult);
-
-    console.log(`New coins: ${newCoins}\nMultiplier: ${mult}\nDelta: ${INCREMENT * mult}\nTelegram Id: ${user.id}`);
+    //console.log(`Init data: ${initData}`);
+    const user = VerifyTelegram(initData);
+    //console.log(`Init data: ${initData}\nUser id: ${user.id}\nUsername: ${user.username}`)
+    const mult = await TryGetCoinMultiplier(user.id);
+    const newCoins = await TryAddCoinsToUser(user.id, INCREMENT * mult);
+    //console.log(`New coins: ${newCoins}\nMultiplier: ${mult}\nDelta: ${INCREMENT * mult}\nTelegram Id: ${user.id}`);
 
     res.json({ new_coins: newCoins });
   } catch (err) {
@@ -72,7 +76,7 @@ app.get("/api/test", async (req, res) => {
   res.json({ hi: "hi" });
 });
 
-async function GetCoinMultiplier(telegram_id) {
+async function TryGetCoinMultiplier(telegram_id) {
   const client = await pool.connect();
   try {
     const res = await client.query(
@@ -86,7 +90,7 @@ async function GetCoinMultiplier(telegram_id) {
   }
 }
 
-async function AddCoinsToUser(telegram_id, amount) {
+async function TryAddCoinsToUser(telegram_id, amount) {
   const client = await pool.connect();
   try {
     const res = await client.query(
@@ -100,7 +104,7 @@ async function AddCoinsToUser(telegram_id, amount) {
   }
 }
 
-async function GetCoinCount(telegram_id) {
+async function TryGetCoinCount(telegram_id) {
   const client = await pool.connect();
   try {
     const res = await client.query(
@@ -114,7 +118,30 @@ async function GetCoinCount(telegram_id) {
   }
 }
 
-function verifyTelegram(initData) {
+async function TryGetCoinLeaderboard(){
+  const client = await pool.connect();
+  try {
+    const res = await client.query("SELECT first_name, pending_coin_count FROM users WHERE pending_coin_count > 0 ORDER BY pending_coin_count DESC LIMIT 10");
+
+    if(res.rows.length === 0) return "No coin earners yet👀";
+
+    let text = "";
+
+    res.rows.forEach((row, index) => {
+      const medals = ["🥇", "🥈", "🥉"];
+      const badge = medals[index] || "🔹";
+      const name = row.first_name || "Anonymous";
+      text += `${badge} ${name} – ${row.pending_coin_count}\n`;
+    });
+
+    return text;
+
+  } finally {
+    client.release();
+  }
+}
+
+function VerifyTelegram(initData) {
   const params = new URLSearchParams(initData);
   const hash = params.get("hash");
   
