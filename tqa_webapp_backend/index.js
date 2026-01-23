@@ -115,32 +115,31 @@ async function GetCoinCount(telegram_id) {
 }
 
 function verifyTelegram(initData) {
-  const params = new URLSearchParams(initData);
-  const hash = params.get("hash");
-  params.delete("hash");
+  const parts = initData.split("&").map(p => p.split("="));
+  const data = {};
+  for (const [k, v] of parts) {
+    data[k] = v;
+  }
 
-  const dataCheckString = [...params.entries()]
+  const hash = data.hash;
+  delete data.hash;
+
+  const dataCheckString = Object.keys(data)
     .sort()
-    .map(([k, v]) => `${k}=${v}`)
+    .map(k => `${k}=${data[k]}`)
     .join("\n");
 
-  const secret = crypto
-    .createHash("sha256")
-    .update(process.env.BOT_TOKEN)
-    .digest();
-
-  const hmac = crypto
-    .createHmac("sha256", secret)
-    .update(dataCheckString)
-    .digest("hex");
+  const secret = crypto.createHash("sha256").update(process.env.BOT_TOKEN).digest();
+  const hmac = crypto.createHmac("sha256", secret).update(dataCheckString).digest("hex");
 
   if (hmac !== hash) {
-    console.error(Error("Invalid Telegram signature"));
+    console.error("Telegram signature mismatch", { hmac, hash, dataCheckString });
     throw new Error("Invalid Telegram signature");
   }
-  
-  return JSON.parse(params.get("user"));
+
+  return JSON.parse(decodeURIComponent(data.user));
 }
+
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
