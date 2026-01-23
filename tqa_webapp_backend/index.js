@@ -134,8 +134,11 @@ function verifyTelegram(initData) {
     .update(dataCheckString)
     .digest("hex");
 
-  if (hmac !== hash) throw new Error("Invalid Telegram signature");
-
+  if (hmac !== hash) {
+    console.error(Error("Invalid Telegram signature"));
+    throw new Error("Invalid Telegram signature");
+  }
+  
   return JSON.parse(params.get("user"));
 }
 
