@@ -47,7 +47,7 @@ function App() {
       <div id="leaderboards">
         <h2>Leaderboards🏆</h2>
         {
-          leaderboard.length ? leaderboard.map((line, index) => (<p key={index}>{line}</p>)) : (<p>No coin earners yet👀</p>)
+          (Array.isArray(leaderboard) && leaderboard.length > 0) ? leaderboard.map((line, index) => (<p key={index}>{line}</p>)) : (<p>No coin earners yet👀</p>)
         }
       </div>
       

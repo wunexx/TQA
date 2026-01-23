@@ -121,7 +121,7 @@ async function TryGetCoinCount(telegram_id) {
 async function TryGetCoinLeaderboard(){
   const client = await pool.connect();
   try {
-    const res = await client.query("SELECT first_name, ROUND(pending_coin_count, 6) AS pending_coin_count FROM users WHERE pending_coin_count > 0 ORDER BY pending_coin_count DESC LIMIT 10");
+    const res = await client.query("SELECT first_name, pending_coin_count FROM users WHERE pending_coin_count > 0 ORDER BY pending_coin_count DESC LIMIT 10");
 
     if(res.rows.length === 0) return [];
 
