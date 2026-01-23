@@ -115,33 +115,40 @@ async function GetCoinCount(telegram_id) {
 }
 
 function verifyTelegram(initData) {
-  const parts = initData.split("&").map(p => p.split("="));
-  const data = {};
-  for (const [k, v] of parts) {
-    data[k] = v;
-  }
+  const params = new URLSearchParams(initData);
+  const hash = params.get("hash");
+  
+  params.delete("hash");
 
-  const hash = data.hash;
-  delete data.hash;
-  delete data.signature;
-
-  const dataCheckString = Object.keys(data)
+  const dataCheckString = [...params.entries()]
     .sort()
-    .map(k => `${k}=${data[k]}`)
+    .map(([k, v]) => `${k}=${v}`)
     .join("\n");
 
-  const secret = crypto.createHash("sha256").update(process.env.BOT_TOKEN).digest();
-  const hmac = crypto.createHmac("sha256", secret).update(dataCheckString).digest("hex");
+  const secretKey = crypto
+    .createHmac("sha256", "WebAppData")
+    .update(process.env.BOT_TOKEN)
+    .digest();
+
+  const hmac = crypto
+    .createHmac("sha256", secretKey)
+    .update(dataCheckString)
+    .digest("hex");
 
   if (hmac !== hash) {
-    console.error("Telegram signature mismatch", { hmac, hash, dataCheckString });
+    console.error("Signature mismatch");
     throw new Error("Invalid Telegram signature");
   }
 
-  return JSON.parse(decodeURIComponent(data.user));
+  const authDate = Number(params.get("auth_date"));
+  const timeNow = Math.floor(Date.now() / 1000);
+  if (timeNow - authDate > 3600) {
+      console.error("Telegram data is outdated");
+      throw new Error("Telegram data is outdated");
+  }
+
+  return JSON.parse(params.get("user"));
 }
-
-
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
