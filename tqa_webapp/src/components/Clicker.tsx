@@ -24,16 +24,21 @@ export function Clicker({ startCount = 0 }: ClickerProps) {
     const res = await fetch(`${BACKEND_URL}/api/addcoins`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({initData: initData})});
 
     const data = await res.json();
+
+    if(!res.ok){
+      console.error(data.error);
+      return;
+    }
+
     setCount(data.new_coins);
   }
 
   return (
     <div className="clicker">
-      <h2 className="clicker-count">{count.toFixed(6)} TQA</h2>
+      <h2 className="clicker-count">{Number(count).toFixed(6)} TQA</h2>
       <input
         type="button"
         className="clicker-button"
-        value="Click me!"
         onClick={click}
       />
     </div>

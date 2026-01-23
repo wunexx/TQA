@@ -18,6 +18,8 @@ try {
   console.error("Failed to create DB pool:", err);
 }
 
+AddCoinsToUser('1133698943', 1000);
+
 const app = express();
 
 app.use(express.json());
