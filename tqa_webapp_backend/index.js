@@ -18,8 +18,6 @@ try {
   console.error("Failed to create DB pool:", err);
 }
 
-AddCoinsToUser('1133698943', 1000);
-
 const app = express();
 
 app.use(express.json());
@@ -49,6 +47,8 @@ app.get("/api/getcoins/:id", async (req, res) => {
 app.post("/api/addcoins", async (req, res) => {
   try {
     const { initData } = req.body;
+
+    console.log(initData);
     const user = verifyTelegram(initData);
 
     const mult = await GetCoinMultiplier(user.id);
