@@ -5,18 +5,40 @@ interface ClickerProps {
 }
 
 const BACKEND_URL = "https://tqa-backend.up.railway.app";
-const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-const initData = window.Telegram?.WebApp?.initData;
 
 export function Clicker({ startCount = 0 }: ClickerProps) {
-  const [count, setCount] = useState(startCount);
-  const [mult, setMult] = useState(1);
-  const [isLoading, setLoading] = useState(true);
+  const [count, setCount] = useState<number>(startCount);
+  const [mult, setMult] = useState<number>(1);
+  const [isLoading, setLoading] = useState<boolean>(true);
+
+  const jwt = localStorage.getItem("jwt");
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/getcoins/${telegramId}`).then(data => data.json()).then(res => {setCount(res.coins)}).finally(() => {setLoading(false)});
-    fetch(`${BACKEND_URL}/api/getmult/${telegramId}`).then(data => data.json()).then(res => {setMult(res.multiplier)});
-  }, [telegramId]);
+    if(!jwt) return;
+
+    const fetchData = async () => {
+      try{
+        const res = await fetch(`${BACKEND_URL}/api/me`, {headers: { Authorization: `Bearer ${jwt}` }});
+
+        const data = await res.json();
+
+        if (res.ok) {
+          setCount(data.balance);
+          setMult(data.multiplier);
+        } else {
+          console.error("Failed to fetch user data:", data.error);
+        }
+      }
+      catch(err){
+        console.error(err);
+      }
+      finally{
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [jwt]);
 
   useEffect(() => {
     window.Telegram?.WebApp?.expand();
@@ -24,7 +46,12 @@ export function Clicker({ startCount = 0 }: ClickerProps) {
   }, []);
 
   async function click(){
-    const res = await fetch(`${BACKEND_URL}/api/addcoins`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({initData: initData})});
+    if(!jwt){
+      console.warn("No jwt, cannot click!");
+      return;
+    }
+
+    const res = await fetch(`${BACKEND_URL}/api/addcoins`, {method: "POST", headers: {"Content-Type": "application/json", Authorization: `Bearer ${jwt}`}, body: JSON.stringify({})});
 
     const data = await res.json();
 
@@ -39,7 +66,7 @@ export function Clicker({ startCount = 0 }: ClickerProps) {
   return (
     <div className="clicker">
       <h2 className="clicker-count">{isLoading ? "Loading your coins..." : Number(count).toFixed(6) + " TQA"}</h2>
-      <p>Coin multiplier: {mult}</p>
+      <p>Multiplier: {mult}x💎</p>
       <input
         type="button"
         className="clicker-button"

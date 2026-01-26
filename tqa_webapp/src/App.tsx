@@ -1,7 +1,10 @@
 import './App.css';
 import { NavButton } from './components/NavButton';
 import { Clicker } from './components/Clicker';
+import { UpgradeButton } from './components/UpgradeButton';
 import { useState, useEffect } from 'react';
+
+const BACKEND_URL = "https://tqa-backend.up.railway.app";
 
 function App() {
 
@@ -12,15 +15,39 @@ function App() {
     </>)
   }
 
+  const initData = window.Telegram?.WebApp?.initData;
+
+  useEffect(() => {
+    const authenticate = async () => {
+      try{
+        const res = await fetch(`${BACKEND_URL}/api/auth/telegram`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(initData)});
+
+        const data = await res.json();
+
+        if(!res.ok)
+        {
+          console.error(data.error);
+          return;
+        }
+
+        localStorage.setItem("jwt", data.token);
+      }
+      catch (err){
+        console.error("Failed to authenticate. Error: ", err);
+      }
+    }
+
+    authenticate();
+  }, []);
+
   window.Telegram?.WebApp?.setBackgroundColor("#0D0B0B");
   window.Telegram?.WebApp?.setHeaderColor("#0D0B0B");
 
   const [leaderboard, setLeaderboard] = useState(["Loading the leaderboard..."]);
 
   useEffect(() => {
-    fetch("https://tqa-backend.up.railway.app/api/getleaderboard").then(data => data.json()).then(res => {setLeaderboard(res.leaderboard)});
+    fetch("https://tqa-backend.up.railway.app/api/leaderboard").then(data => data.json()).then(res => {setLeaderboard(res.leaderboard)});
   }, []);
-
 
   return (
     <>
@@ -33,18 +60,26 @@ function App() {
 
       <div id="about">
         <h2>About us🚀</h2>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        <p>Welcome to the official playground of the Telegram TQA mini-app!
+        
+        We’re the same mad geniuses (questionable) and passionate degenerates (confirmed) behind the $TQA meme coin. Our mission has always been simple: to build a fun, unstoppable community where humor meets crypto.
+
+        While the main token is our rocket ship, this Telegram Mini App is yours playground, where you can tap and earn TQA coins, you also can involve the friends and see leaderboards, use improvements to level up your income.</p>
       </div>
 
       <div id="game">
         <h2>Clicker👆</h2>
-        <p>*click to earn TQA coins✨*</p>
         <Clicker></Clicker>
+        <p>*click to earn TQA coins✨*</p>
       </div>
 
       <div id="upgrades">
         <h2>Upgrades💪</h2>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        <div className="upgrade-container">
+          <UpgradeButton title='Upgrade1' desc='Lorem ipsum dolor sit amet.' cost={100}></UpgradeButton>
+          <UpgradeButton title='Upgrade2' desc='Lorem ipsum dolor sit amet.' cost={1000}></UpgradeButton>
+          <UpgradeButton title='Upgrade2' desc='Lorem ipsum dolor sit amet.' cost={10000}></UpgradeButton>
+        </div>
       </div>
 
       <div id="leaderboards">

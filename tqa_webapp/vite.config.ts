@@ -13,13 +13,14 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     allowedHosts: [
-      'see-plan-combat-cheats.trycloudflare.com'
+      'minutes-materials-lance-yarn.trycloudflare.com'
     ],
     hmr: {
       protocol: 'wss',
-      host: 'see-plan-combat-cheats.trycloudflare.com',
+      host: 'minutes-materials-lance-yarn.trycloudflare.com',
       port: 443,
     }
   }
   */
+
 })
