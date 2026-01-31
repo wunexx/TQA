@@ -90,6 +90,7 @@ nav{
 }
 .upgrade-btn:hover{
   filter: brightness(1.4);
+  cursor: pointer;
 }
 
 .upgrade-btn p, .upgrade-btn h2, .upgrade-btn h3{

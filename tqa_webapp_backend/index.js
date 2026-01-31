@@ -4,234 +4,190 @@ import pkg from "pg";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 import jwt from "jsonwebtoken";
-import { error } from "console";
+import helmet from "helmet";
 
 const { Pool } = pkg;
-
-const INCREMENT = 0.000026;
-
-let pool;
-try {
-  pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
-} catch (err) {
-  console.error("Failed to create DB pool:", err);
-}
-
 const app = express();
 
-app.use(express.json());
+const INCREMENT = 0.000026;
+const ACCESS_EXPIRE = "5m";
+const REFRESH_DAYS = 30;
 
-app.use(cors({
-  origin: ["https://wunexx.github.io"],
-  methods: ["GET", "POST"]
-}));
-
-app.set('trust proxy', 1);
-
-app.use(rateLimit({
-  windowMs: 10 * 1000,
-  max: 50
-}));
-
-app.post("/api/auth/telegram", async (req, res) => {
-  try{
-    const { initData } = req.body;
-  
-    const user = verifyTelegram(initData);
-
-    const userId = user.id;
-
-    const token = jwt.sign({userId}, process.env.JWT_SECRET, {expiresIn: "15m"});
-
-    res.json({token});
-  }
-  catch(err){
-    res.status(401).json({error: "Invalid telegram auth!"});
-  }
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-function auth(req, res, next){
-  try{
+app.set("trust proxy", 1);
+app.use(express.json());
+app.use(helmet());
+app.use(cors({ origin: ["https://wunexx.github.io"] }));
+app.use(rateLimit({ windowMs: 10_000, max: 50 }));
+
+function hashToken(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function generateRefreshToken() {
+  return crypto.randomBytes(64).toString("hex");
+}
+
+function signAccessToken(userId, ua) {
+  return jwt.sign(
+    { userId, ua },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: ACCESS_EXPIRE,
+      issuer: "wunex",
+      audience: "wunex-client"
+    }
+  );
+}
+
+function auth(req, res, next) {
+  try {
     const header = req.headers.authorization;
+    if (!header) return res.status(401).json({ error: "Missing token" });
 
-    if(!header)
-      return res.status(401).json({error: "Missing Authorization Header!"});
+    const token = header.split(" ")[1];
+    const payload = jwt.verify(token, process.env.JWT_SECRET, {
+      issuer: "wunex",
+      audience: "wunex-client"
+    });
 
-    const token = header.split(' ')[1];
-
-    if(!token)
-      return res.status(401).json({error: "Invalid Authorization header!"});
-
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    if (payload.ua !== req.headers["user-agent"])
+      return res.status(401).json({ error: "Fingerprint mismatch" });
 
     req.userId = payload.userId;
-
     next();
-  }
-  catch(err){
-    return res.status(401).json({error: "Invalid or expired token!"});
+  } catch {
+    res.status(401).json({ error: "Invalid token" });
   }
 }
 
-app.post("/api/addcoins", auth, async (req, res) => {
+app.post("/api/auth/telegram", async (req, res) => {
   try {
-    const userId = req.userId;
+    const user = verifyTelegram(req.body.initData);
+    const userId = user.id;
 
-    const lastClicked = await getLastClick(userId);
+    await pool.query(
+      "INSERT INTO users (telegram_id, first_name) VALUES ($1,$2) ON CONFLICT DO NOTHING",
+      [userId, user.first_name]
+    );
 
-    const now = new Date();
+    const refreshToken = generateRefreshToken();
+    const refreshHash = hashToken(refreshToken);
 
-    if(lastClicked && now - lastClicked < 500){
-      return res.status(429).json({error: "Click too fast!"});
-    }
+    await pool.query(
+      "INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1,$2,NOW()+interval '30 days')",
+      [userId, refreshHash]
+    );
 
-    const multiplier = await tryGetCoinMultiplier(userId);
-    const newCoins = await tryAddCoinsToUser(userId, INCREMENT * multiplier);
+    const accessToken = signAccessToken(userId, req.headers["user-agent"]);
+    res.json({ accessToken, refreshToken });
 
-    await updateLastClick(userId, now);
-
-    res.json({new_coins: newCoins});
-
-  } catch (err) {
-    res.status(500).json({ error: "Internal Server Error" });
+  } catch {
+    res.status(401).json({ error: "Invalid telegram auth" });
   }
 });
 
-async function getLastClick(userId){
+app.post("/api/refresh", async (req, res) => {
+  const { refreshToken } = req.body;
+  const hash = hashToken(refreshToken);
+
+  const { rows } = await pool.query(
+    "SELECT * FROM refresh_tokens WHERE token_hash=$1 AND revoked=false AND expires_at > NOW()",
+    [hash]
+  );
+
+  if (rows.length === 0)
+    return res.status(401).json({ error: "Invalid refresh token" });
+
+  const tokenRow = rows[0];
+
+  await pool.query(
+    "UPDATE refresh_tokens SET revoked=true WHERE id=$1",
+    [tokenRow.id]
+  );
+
+  const newRefresh = generateRefreshToken();
+  const newHash = hashToken(newRefresh);
+
+  await pool.query(
+    "INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1,$2,NOW()+interval '30 days')",
+    [tokenRow.user_id, newHash]
+  );
+
+  const newAccess = signAccessToken(
+    tokenRow.user_id,
+    req.headers["user-agent"]
+  );
+
+  res.json({ accessToken: newAccess, refreshToken: newRefresh });
+});
+
+app.post("/api/addcoins", auth, async (req, res) => {
   const client = await pool.connect();
-  try{
-    const res = await client.query("SELECT last_clicked FROM users WHERE telegram_id = $1", [userId]);
+  try {
+    await client.query("BEGIN");
 
-    if(res.rows.length === 0) return null;
+    const result = await client.query(
+      `
+      UPDATE users
+      SET balance = balance + $1,
+          last_clicked = NOW()
+      WHERE telegram_id = $2
+        AND (last_clicked IS NULL OR NOW() - last_clicked > interval '500 ms')
+      RETURNING balance
+      `,
+      [INCREMENT, req.userId]
+    );
 
-    return res.rows[0].last_clicked;
-  }
-  finally{
+    if (result.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(429).json({ error: "Too fast" });
+    }
+
+    await client.query(
+      "INSERT INTO coin_events (user_id,type,amount,ip,user_agent) VALUES ($1,'mint',$2,$3,$4)",
+      [
+        req.userId,
+        INCREMENT,
+        req.ip,
+        req.headers["user-agent"]
+      ]
+    );
+
+    await client.query("COMMIT");
+    res.json({ balance: result.rows[0].balance });
+
+  } catch {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Internal error" });
+  } finally {
     client.release();
   }
-}
-
-async function updateLastClick(userId, newTime){
-  const client = await pool.connect();
-  try{
-    await client.query("UPDATE users SET last_clicked = $1 WHERE telegram_id = $2", [newTime, userId]);
-  }
-  finally{
-    client.release();
-  }
-}
+});
 
 app.get("/api/me", auth, async (req, res) => {
-  try{
-    const userId = req.userId;
+  const { rows } = await pool.query(
+    "SELECT balance, coin_multiplier FROM users WHERE telegram_id=$1",
+    [req.userId]
+  );
 
-    const multiplier = await tryGetCoinMultiplier(userId);
-    const balance = await tryGetCoinCount(userId);
-
-    res.json({multiplier, balance});
-  }
-  catch{
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+  res.json(rows[0]);
 });
 
 app.get("/api/leaderboard", async (req, res) => {
-  try{
-    const leaderboard = await tryGetCoinLeaderboard();
-
-    res.json({leaderboard});
-  } catch (err){
-    res.status(500).json({ error: "Internal server error" });
-  }
+  const { rows } = await pool.query(
+    "SELECT first_name,balance FROM users ORDER BY balance DESC LIMIT 10"
+  );
+  res.json(rows);
 });
-
-app.post("/api/buy-upgrade", auth, async (req, res) => {
-  try{
-    const { upgradeId } = req.body;
-
-    const userId = req.userId;
-
-    //UNDER CONSTRUCTION
-  }
-  catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.get("/api/test", async (req, res) => {
-  //console.log("working properly!");
-  res.json({ hi: "hi" });
-});
-
-async function tryGetCoinMultiplier(telegram_id) {
-  const client = await pool.connect();
-  try {
-    const res = await client.query(
-      "SELECT coin_multiplier FROM users WHERE telegram_id = $1",
-      [telegram_id]
-    );
-    if (res.rows.length === 0) return 1;
-    return res.rows[0].coin_multiplier ?? 1;
-  } finally {
-    client.release();
-  }
-}
-
-async function tryAddCoinsToUser(telegram_id, amount) {
-  const client = await pool.connect();
-  try {
-    const res = await client.query(
-      "UPDATE users SET balance = balance + $1 WHERE telegram_id = $2 RETURNING balance",
-      [Number(amount.toFixed(6)), telegram_id]
-    );
-    if (res.rowCount === 0) return false;
-    return res.rows[0].balance;
-  } finally {
-    client.release();
-  }
-}
-
-async function tryGetCoinCount(telegram_id) {
-  const client = await pool.connect();
-  try {
-    const res = await client.query(
-      "SELECT balance FROM users WHERE telegram_id = $1",
-      [telegram_id]
-    );
-    if (res.rows.length === 0) return 0;
-    return res.rows[0].balance ?? 0;
-  } finally {
-    client.release();
-  }
-}
-
-async function tryGetCoinLeaderboard(){
-  const client = await pool.connect();
-  try {
-    const res = await client.query("SELECT first_name, balance FROM users WHERE balance > 0 ORDER BY balance DESC LIMIT 10");
-
-    if(res.rows.length === 0) return [];
-
-    const medals = ["🥇", "🥈", "🥉"];
-
-    return res.rows.map((row, index) => {
-      const badge = medals[index] || "🔹";
-      const name = row.first_name || "Anonymous";
-      return `${badge} ${name} - ${row.balance}`;
-    });
-
-  } finally {
-    client.release();
-  }
-}
 
 function verifyTelegram(initData) {
   const params = new URLSearchParams(initData);
   const hash = params.get("hash");
-  
   params.delete("hash");
 
   const dataCheckString = [...params.entries()]
@@ -249,20 +205,13 @@ function verifyTelegram(initData) {
     .update(dataCheckString)
     .digest("hex");
 
-  if (hmac !== hash) {
-    console.error("Signature mismatch");
-    throw new Error("Invalid Telegram signature");
-  }
+  if (hmac !== hash) throw new Error("Bad signature");
 
   const authDate = Number(params.get("auth_date"));
-  const timeNow = Math.floor(Date.now() / 1000);
-  if (timeNow - authDate > 3600) {
-      console.error("Telegram data is outdated");
-      throw new Error("Telegram data is outdated");
-  }
+  if (Date.now()/1000 - authDate > 3600)
+    throw new Error("Expired");
 
   return JSON.parse(params.get("user"));
 }
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(process.env.PORT || 8080);

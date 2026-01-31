@@ -6,94 +6,124 @@ import { useState, useEffect } from 'react';
 
 const BACKEND_URL = "https://tqa-backend.up.railway.app";
 
-function App() {
+async function fetchWithAuth(url: string, options: any = {}) {
+  let accessToken = localStorage.getItem("accessToken");
 
+  let res = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
+
+  if (res.status !== 401) return res;
+
+  const refreshToken = localStorage.getItem("refreshToken");
+  const refreshRes = await fetch(`${BACKEND_URL}/api/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken })
+  });
+
+  const refreshData = await refreshRes.json();
+  if (!refreshRes.ok) throw new Error("Session expired");
+
+  localStorage.setItem("accessToken", refreshData.accessToken);
+  localStorage.setItem("refreshToken", refreshData.refreshToken);
+
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${refreshData.accessToken}`
+    }
+  });
+}
+
+function App() {
   if(!window.Telegram?.WebApp?.initDataUnsafe?.user?.id){
     document.body.style.backgroundColor = "black";
-    return(<>
-      <p style={{color: "white"}}>Open in Telegram to continue.</p>
-    </>)
+    return <p style={{color: "white"}}>Open in Telegram to continue.</p>;
   }
 
-  const initData = window.Telegram?.WebApp?.initData;
+  const initData = window.Telegram.WebApp.initData;
 
   useEffect(() => {
     const authenticate = async () => {
-      try{
-        const res = await fetch(`${BACKEND_URL}/api/auth/telegram`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(initData)});
+      const res = await fetch(`${BACKEND_URL}/api/auth/telegram`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ initData })
+      });
 
-        const data = await res.json();
+      const data = await res.json();
+      if (!res.ok) return console.error(data.error);
 
-        if(!res.ok)
-        {
-          console.error(data.error);
-          return;
-        }
-
-        localStorage.setItem("jwt", data.token);
-      }
-      catch (err){
-        console.error("Failed to authenticate. Error: ", err);
-      }
-    }
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+    };
 
     authenticate();
   }, []);
 
-  window.Telegram?.WebApp?.setBackgroundColor("#0D0B0B");
-  window.Telegram?.WebApp?.setHeaderColor("#0D0B0B");
-
-  const [leaderboard, setLeaderboard] = useState(["Loading the leaderboard..."]);
+  const [leaderboard, setLeaderboard] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("https://tqa-backend.up.railway.app/api/leaderboard").then(data => data.json()).then(res => {setLeaderboard(res.leaderboard)});
+    fetch(`${BACKEND_URL}/api/leaderboard`)
+      .then(r => r.json())
+      .then(res => {
+        setLeaderboard(
+          res.map((u: any) => `${u.first_name}: ${u.balance.toFixed(6)} TQA`)
+        );
+      });
   }, []);
+
+  window.Telegram.WebApp.setBackgroundColor("#0D0B0B");
+  window.Telegram.WebApp.setHeaderColor("#0D0B0B");
 
   return (
     <>
       <nav>
-          <NavButton text="About Us🚀" link="#about"></NavButton>
-          <NavButton text="Game🎯" link="#game"></NavButton>
-          <NavButton text="Upgrades💪" link="#upgrades"></NavButton>
-          <NavButton text="Leaderboards🏆" link="#leaderboards"></NavButton>
+        <NavButton text="About Us🚀" link="#about"/>
+        <NavButton text="Game🎯" link="#game"/>
+        <NavButton text="Upgrades💪" link="#upgrades"/>
+        <NavButton text="Leaderboards🏆" link="#leaderboards"/>
       </nav>
 
       <div id="about">
         <h2>About us🚀</h2>
-        <p>Welcome to the official playground of the Telegram TQA mini-app!
-        
-        We’re the same mad geniuses (questionable) and passionate degenerates (confirmed) behind the $TQA meme coin. Our mission has always been simple: to build a fun, unstoppable community where humor meets crypto.
-
-        While the main token is our rocket ship, this Telegram Mini App is yours playground, where you can tap and earn TQA coins, you also can involve the friends and see leaderboards, use improvements to level up your income.</p>
+        <p>Tap. Earn. Ascend. Repeat.</p>
       </div>
 
       <div id="game">
         <h2>Clicker👆</h2>
-        <Clicker></Clicker>
+        <Clicker fetchWithAuth={fetchWithAuth}/>
         <p>*click to earn TQA coins✨*</p>
       </div>
 
       <div id="upgrades">
         <h2>Upgrades💪</h2>
         <div className="upgrade-container">
-          <UpgradeButton title='Upgrade1' desc='Lorem ipsum dolor sit amet.' cost={100}></UpgradeButton>
-          <UpgradeButton title='Upgrade2' desc='Lorem ipsum dolor sit amet.' cost={1000}></UpgradeButton>
-          <UpgradeButton title='Upgrade2' desc='Lorem ipsum dolor sit amet.' cost={10000}></UpgradeButton>
+          <UpgradeButton title='Upgrade1' desc='Lorem ipsum.' cost={100}/>
+          <UpgradeButton title='Upgrade2' desc='Lorem ipsum.' cost={1000}/>
+          <UpgradeButton title='Upgrade3' desc='Lorem ipsum.' cost={10000}/>
         </div>
       </div>
 
       <div id="leaderboards">
         <h2>Leaderboards🏆</h2>
-        {
-          (Array.isArray(leaderboard) && leaderboard.length > 0) ? leaderboard.map((line, index) => (<p key={index} className='leaderboard-row'>{line}</p>)) : (<p>No coin earners yet👀</p>)
+        {leaderboard.length
+          ? leaderboard.map((l, i) => <p key={i}>{l}</p>)
+          : <p>No coin earners yet👀</p>
         }
       </div>
-      
+
       <footer>
         <p>with love from tqa❤️ v0.2</p>
       </footer>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
